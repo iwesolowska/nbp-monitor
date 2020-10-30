@@ -4,6 +4,7 @@ import pprint
 import matplotlib.pyplot as plt
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkcalendar import DateEntry
 
 
 def main():
@@ -21,7 +22,7 @@ def widgets_setup():
     ccy_values = ['AUD', 'BRL', 'CAD', 'CHF', 'COP', 'CZK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK',
                   'PLN', 'RUB', 'SEK', 'USD']
     gui = tk.Tk()
-    gui.geometry('400x300')
+    gui.geometry('800x300')
     gui.title('NBP Monitor')
 
     title_label = tk.Label(gui, text='Welcome to NBP currency monitor!')
@@ -39,10 +40,21 @@ def widgets_setup():
     ccy_combo = ttk.Combobox(control_frame, values=ccy_values)
     ccy_combo.pack(fill=tk.Y, side=tk.LEFT)
 
-    def b_pressed():
-        fetch_nbp_data('2020-10-01', '2020-10-30', 'a', ccy_combo.get())
+    start_date_label = tk.Label(control_frame, text='Choose start date: ')
+    start_date_label.pack(fill=tk.Y, side=tk.LEFT)
+    start_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020, date_pattern='yyyy-mm-dd')
+    start_cdr.pack(fill=tk.Y, side=tk.LEFT)
 
-    draw_button = tk.Button(gui, text='Show data', command=b_pressed)
+    end_date_label = tk.Label(control_frame, text='Choose end date: ')
+    end_date_label.pack(fill=tk.Y, side=tk.LEFT)
+    end_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020, date_pattern='yyyy-mm-dd')
+    end_cdr.pack(fill=tk.Y, side=tk.LEFT)
+
+    def b_pressed():
+        fetch_nbp_data(start_cdr.get(), end_cdr.get(), 'a', ccy_combo.get())
+
+    draw_button = tk.Button(control_frame, text='Show data', command=b_pressed)
+    draw_button.pack(fill=tk.Y, side=tk.RIGHT)
 
     return gui
 
