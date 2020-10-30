@@ -2,6 +2,8 @@ import requests
 import json
 import pprint
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkcalendar import DateEntry
@@ -42,16 +44,19 @@ def widgets_setup():
 
     start_date_label = tk.Label(control_frame, text='Choose start date: ')
     start_date_label.pack(fill=tk.Y, side=tk.LEFT)
-    start_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020, date_pattern='yyyy-mm-dd')
+    start_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020,
+                          date_pattern='yyyy-mm-dd')
     start_cdr.pack(fill=tk.Y, side=tk.LEFT)
 
     end_date_label = tk.Label(control_frame, text='Choose end date: ')
     end_date_label.pack(fill=tk.Y, side=tk.LEFT)
-    end_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020, date_pattern='yyyy-mm-dd')
+    end_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020,
+                        date_pattern='yyyy-mm-dd')
     end_cdr.pack(fill=tk.Y, side=tk.LEFT)
 
     def b_pressed():
-        fetch_nbp_data(start_cdr.get(), end_cdr.get(), 'a', ccy_combo.get())
+        rates = fetch_nbp_data(start_cdr.get(), end_cdr.get(), 'a', ccy_combo.get())
+        draw_plot(rates, start_cdr.get(), end_cdr.get(), ccy_combo.get())
 
     draw_button = tk.Button(control_frame, text='Show data', command=b_pressed)
     draw_button.pack(fill=tk.Y, side=tk.RIGHT)
@@ -65,6 +70,10 @@ def fetch_nbp_data(start_day, end_day, table, code):
     prices = response.json()
     rates = prices['rates']
 
+    return rates
+
+
+def draw_plot(rates, start_day, end_day, code):
     for rate in rates:
         print(f"{rate['effectiveDate']}, {rate['mid']}")
 
@@ -74,6 +83,7 @@ def fetch_nbp_data(start_day, end_day, table, code):
     plt.plot(effective_date, cc_price, 'o-')
     plt.xlabel('Date')
     plt.ylabel('Price')
+    plt.xticks(rotation=90)
     plt.title('%s prices \nFrom %s to %s' % (code.upper(), start_day, end_day))
     plt.show()
 
