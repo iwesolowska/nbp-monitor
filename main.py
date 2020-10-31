@@ -1,11 +1,11 @@
-import requests
-import json
 import pprint
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
 import tkinter as tk
 import tkinter.ttk as ttk
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.figure
+import matplotlib.backends.backend_tkagg
+import requests
 from tkcalendar import DateEntry
 
 
@@ -24,7 +24,7 @@ def widgets_setup():
     ccy_values = ['AUD', 'BRL', 'CAD', 'CHF', 'COP', 'CZK', 'EUR', 'GBP', 'HKD', 'HUF', 'INR', 'JPY', 'MXN', 'NOK',
                   'PLN', 'RUB', 'SEK', 'USD']
     gui = tk.Tk()
-    gui.geometry('800x300')
+    gui.geometry('800x600')
     gui.title('NBP Monitor')
 
     title_label = tk.Label(gui, text='Welcome to NBP currency monitor!')
@@ -33,6 +33,7 @@ def widgets_setup():
     gui.rowconfigure(1, weight=1)
     plot_stats_frame = tk.Frame(gui)
     plot_stats_frame.grid(row=1)
+    # plot_canvas = tk.Canvas(plot_stats_frame, width=500, height=400)
 
     control_frame = tk.Frame(gui)
     control_frame.grid(row=2)
@@ -40,11 +41,13 @@ def widgets_setup():
     ccy_label = tk.Label(control_frame, text='Choose currency: ')
     ccy_label.pack(fill=tk.Y, side=tk.LEFT)
     ccy_combo = ttk.Combobox(control_frame, values=ccy_values)
+    ccy_combo.set('SEK')
     ccy_combo.pack(fill=tk.Y, side=tk.LEFT)
 
     start_date_label = tk.Label(control_frame, text='Choose start date: ')
     start_date_label.pack(fill=tk.Y, side=tk.LEFT)
     start_cdr = DateEntry(control_frame, width=12, background='darkblue', foreground='white', borderwidth=2, year=2020,
+                          month=8,
                           date_pattern='yyyy-mm-dd')
     start_cdr.pack(fill=tk.Y, side=tk.LEFT)
 
@@ -55,8 +58,11 @@ def widgets_setup():
     end_cdr.pack(fill=tk.Y, side=tk.LEFT)
 
     def b_pressed():
-        rates = fetch_nbp_data(start_cdr.get(), end_cdr.get(), 'a', ccy_combo.get())
-        draw_plot(rates, start_cdr.get(), end_cdr.get(), ccy_combo.get())
+        dates, prices = fetch_nbp_data(start_cdr.get(), end_cdr.get(), 'a', ccy_combo.get())
+        fig = get_matplot_fig(dates, prices, start_cdr.get(), end_cdr.get(), ccy_combo.get())
+        canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=plot_stats_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
     draw_button = tk.Button(control_frame, text='Show data', command=b_pressed)
     draw_button.pack(fill=tk.Y, side=tk.RIGHT)
@@ -70,22 +76,22 @@ def fetch_nbp_data(start_day, end_day, table, code):
     prices = response.json()
     rates = prices['rates']
 
-    return rates
+    dates = [rate['effectiveDate'] for rate in rates]
+    prices = [rate['mid'] for rate in rates]
+
+    return dates, prices
 
 
-def draw_plot(rates, start_day, end_day, code):
-    for rate in rates:
-        print(f"{rate['effectiveDate']}, {rate['mid']}")
-
-    effective_date = [rate['effectiveDate'] for rate in rates]
-    cc_price = [rate['mid'] for rate in rates]
+def get_matplot_fig(dates, prices, start_day, end_day, code):
     plt.style.use('dark_background')
-    plt.plot(effective_date, cc_price, 'o-')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
     plt.xticks(rotation=90)
-    plt.title('%s prices \nFrom %s to %s' % (code.upper(), start_day, end_day))
-    plt.show()
+
+    fig = plt.figure(figsize=(5, 4), dpi=100)
+    sub = fig.add_subplot(title='%s prices \nFrom %s to %s' % (code.upper(), start_day, end_day), xlabel='Date',
+                          ylabel='Price')
+    sub.plot(dates, prices, 'o-')
+
+    return fig
 
 
 if __name__ == '__main__':
